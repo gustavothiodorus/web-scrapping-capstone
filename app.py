@@ -12,25 +12,40 @@ matplotlib.use('Agg')
 app = Flask(__name__) #do not change this
 
 #insert the scrapping here
-url_get = requests.get('____')
+url_get = requests.get('https://www.imdb.com/search/title/?release_date=2019-01-01,2019-12-31')
 soup = BeautifulSoup(url_get.content,"html.parser")
 
-____ = soup.find('___')
-___ = tbody.find_all('___')
+all_film = soup.find_all('div', attrs={'class':'lister-item mode-advanced'})
 temp = [] #initiating a tuple
 
-for i in range(1, len(tr)):
-#insert the scrapping process here
+for film in all_film:
+    #scrapping process
+    title = film.find_all('a')[1].text.strip()
     
-    temp.append((____,____)) 
-
-temp = temp[::-1]
+    imdb_rating = film.find_all('strong')[0].text.strip()
+    
+    extract_metascore = film.find_all('span', attrs={'class':'metascore favorable'})
+    if not extract_metascore:
+        metascore = np.nan
+    else:
+        metascore = extract_metascore[0].text.strip()
+        
+    votes = film.find_all('span', attrs={'name':'nv'})[0].text.strip()
+    
+    temp.append((title, imdb_rating, metascore, votes))
 
 #change into dataframe
-data = pd.DataFrame(____, columns = ('____','_____'))
+df = pd.DataFrame(temp, columns = ('title', 'imdb_rating', 'metascore', 'votes'))
 
 #insert data wrangling here
+df[['imdb_rating','metascore']] = df[['imdb_rating','metascore']].astype('float64')
 
+df['votes'] = df['votes'].str.replace(",", "")
+df['votes'] = df['votes'].astype('int64')
+
+df['metascore'].fillna(df['metascore'].mean(), inplace = True)
+
+df['metascore'] = df['metascore'].astype('int64')
 
 #end of data wranggling 
 
